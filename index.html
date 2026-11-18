@@ -279,12 +279,6 @@ footer{text-align:center;padding-top:40px} footer .fmark{display:block;width:118
       <button data-min="50" aria-pressed="false">+50 M USD</button>
       <button data-min="500" aria-pressed="false">+500 M USD</button>
     </div>
-    <div class="presets" id="sect" role="group" aria-label="Zona climática">
-      <button data-s="" aria-pressed="true">Todas las zonas climáticas</button>
-      <button data-s="Zona fría" aria-pressed="false">Zona fría</button>
-      <button data-s="Zona templada" aria-pressed="false">Zona templada</button>
-      <button data-s="Zona cálida" aria-pressed="false">Zona cálida</button>
-    </div>
   </div>
   <div class="dual" id="dual">
     <div class="track"><div class="fill" id="fill"></div></div>
@@ -339,7 +333,7 @@ const D = {"geo": {"W": 538, "H": 432, "viewBox": "339.5 446.7 538.5 431.8", "pr
 const RAMP = ['#dce9f8','#b6d3f2','#7fb2e8','#3f8ada','#0067d1','#004590'];
 const disp = p => D.display[p] || p;
 const CHEV = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg>';
-let brand=null, prio=0, viso='all', sector='', minRev=0, maxRev=Infinity, vtab='companies', openIdent=null, ffunc='', fsen='', fstat='', metric='n', selected=null, q='', sortKey='rev', sortDir=-1, openCo=null, openComp=null, openPeople=null;
+let brand=null, prio=0, viso='all', minRev=0, maxRev=Infinity, vtab='companies', openIdent=null, ffunc='', fsen='', fstat='', metric='n', selected=null, q='', sortKey='rev', sortDir=-1, openCo=null, openComp=null, openPeople=null;
 const SLAB={connected:'Conectada', pending:'En proceso', new:'En proceso', noli:'En proceso', client:'Ya contactada', small:'En proceso', norev:'En proceso'};
 const SORD=['connected','pending','new','noli','client','small','norev'];
 
@@ -371,7 +365,7 @@ const passViso = r => viso==='all' ? true : viso==='y' ? r.brands.includes('Viso
 const stOf = x => x.acc ? 'connected' : (x.stage||'none');
 const matchP = x => (!ffunc || x.func===ffunc) && (!fsen || x.sen===fsen) && (!fstat || stOf(x)===fstat);
 const vis = r => (ffunc||fsen||fstat) ? r.ident.filter(matchP) : r.ident;
-function pool(){ return D.rows.filter(r => passBrand2(r) && passViso(r) && (!sector || r.sector===sector) && (r.rev||0) >= minRev && (maxRev===Infinity || (r.rev||0) < maxRev) && (!(ffunc||fsen||fstat) || vis(r).length>0)); }
+function pool(){ return D.rows.filter(r => passBrand2(r) && passViso(r) && (r.rev||0) >= minRev && (maxRev===Infinity || (r.rev||0) < maxRev) && (!(ffunc||fsen||fstat) || vis(r).length>0)); }
 function drawDD(){
   const funcs=[...new Set(D.rows.flatMap(r=>r.ident.map(x=>x.func)))].filter(x=>x&&x!=='—').sort();
   const sens=['Director+','Manager','Specialist'].filter(x=>D.rows.some(r=>r.ident.some(p=>p.sen===x)));
@@ -428,7 +422,7 @@ function peopleTable(p){
   const rk={}; D.rows.slice().sort((a,b)=>(b.rev||0)-(a.rev||0) || b.nb-a.nb || b.conn-a.conn || a.name.localeCompare(b.name)).forEach((r,i)=>rk[r.name]=i+1);
   const L=[]; p.forEach(r=>vis(r).forEach(x=>L.push({...x, co:r.name, prov:r.prov, rk:rk[r.name]})));
   L.sort((x,y)=>x.rk-y.rk || (y.acc?1:0)-(x.acc?1:0) || ({sent:2,scheduled:1}[y.stage]||0)-({sent:2,scheduled:1}[x.stage]||0) || ['Director+','Manager','Specialist','—'].indexOf(x.sen)-['Director+','Manager','Specialist','—'].indexOf(y.sen) || x.co.localeCompare(y.co) || x.n.localeCompare(y.n));
-  if(!L.length) return '<p class="empty">Ninguna persona coincide. Quita el filtro de facturación, zona climática o país.</p>';
+  if(!L.length) return '<p class="empty">Ninguna persona coincide. Quita el filtro de facturación o país.</p>';
   return '<div class="bhead" style="grid-template-columns:30px minmax(160px,1.1fr) minmax(170px,1.3fr) 150px 90px 110px 80px"><span></span><span>Nombre</span><span>Empresa</span><span>Función</span><span>Nivel</span><span>País</span><span>LinkedIn</span></div>'
     + L.map((x,i)=>'<div class="brow'+(x.acc?' pconn':'')+'" style="grid-template-columns:30px minmax(160px,1.1fr) minmax(170px,1.3fr) 150px 90px 110px 80px"><span class="pl">'+(i+1)+'</span>'
       + '<span class="st">'+x.n+STG(x)+'<span class="sub">'+x.pos+'</span></span>'
@@ -524,8 +518,6 @@ function setRev(v){ loI=STEPS.indexOf(v); hiI=6; applyRange(); }
 document.getElementById('presets').addEventListener('click', e => { const b = e.target.closest('button'); if(!b) return; setRev(+b.dataset.min); return;
   document.querySelectorAll('#presets button').forEach(x => x.setAttribute('aria-pressed', x===b)); drawMap(); drawGrid(); });
 
-document.getElementById('sect').addEventListener('click', e => { const b = e.target.closest('button'); if(!b) return; sector = b.dataset.s; selected=null;
-  document.querySelectorAll('#sect button').forEach(x => x.setAttribute('aria-pressed', x===b)); applyRange(); });
 document.getElementById('vtab').addEventListener('click', e => { const b=e.target.closest('button'); if(!b) return; vtab=b.dataset.v; document.querySelectorAll('#vtab button').forEach(x=>x.setAttribute('aria-pressed', x===b)); document.getElementById('statwrap').hidden = vtab!=='people'; if(vtab!=='people' && fstat){ fstat=''; document.getElementById('stat').value=''; applyRange(); } else drawGrid(); });
 document.getElementById('q').addEventListener('input', e => { q = e.target.value.trim().toLowerCase(); drawGrid(); });
 document.getElementById('qclear').addEventListener('click', () => { const i=document.getElementById('q'); i.value=''; q=''; drawGrid(); i.focus(); });
